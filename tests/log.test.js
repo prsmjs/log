@@ -77,6 +77,44 @@ describe("log", () => {
     expect(entry.cause.stack).toBeTypeOf("string")
   })
 
+  it("preserves falsy error codes", () => {
+    const err = new Error("zero code")
+    err.code = 0
+    log.error("failed", { cause: err })
+    const entry = JSON.parse(errorSpy.mock.calls[0][0])
+    expect(entry.cause.code).toBe(0)
+  })
+
+  it("handles Error as first arg on non-error levels", () => {
+    const err = new Error("warning error")
+    log.warn(err)
+    const entry = JSON.parse(warnSpy.mock.calls[0][0])
+    expect(entry.msg).toBe("warning error")
+    expect(entry.err.message).toBe("warning error")
+  })
+
+  it("merges Error-as-first-arg with explicit data", () => {
+    const err = new Error("db down")
+    log.error(err, { host: "db-1" })
+    const entry = JSON.parse(errorSpy.mock.calls[0][0])
+    expect(entry.msg).toBe("db down")
+    expect(entry.err.message).toBe("db down")
+    expect(entry.host).toBe("db-1")
+  })
+
+  it("handles null and undefined values in data", () => {
+    log.info("nullable", { a: null, b: undefined })
+    const entry = JSON.parse(logSpy.mock.calls[0][0])
+    expect(entry.a).toBeNull()
+    expect(entry.b).toBeUndefined()
+  })
+
+  it("handles empty data object", () => {
+    log.info("empty", {})
+    const entry = JSON.parse(logSpy.mock.calls[0][0])
+    expect(entry.msg).toBe("empty")
+  })
+
   it("suppresses all output at level none", () => {
     log.configure({ level: "none" })
     log.debug("x")
@@ -140,6 +178,32 @@ describe("child loggers", () => {
     expect(entry.env).toBe("production")
   })
 
+  it("deeply nested children accumulate all ancestor context", () => {
+    const a = log.child({ a: 1 })
+    const b = a.child({ b: 2 })
+    const c = b.child({ c: 3 })
+    c.info("deep")
+    const entry = JSON.parse(logSpy.mock.calls[0][0])
+    expect(entry.a).toBe(1)
+    expect(entry.b).toBe(2)
+    expect(entry.c).toBe(3)
+  })
+
+  it("child loggers work at all levels", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    const child = log.child({ svc: "auth" })
+    child.debug("d")
+    child.info("i")
+    child.warn("w")
+    child.error("e")
+    expect(logSpy).toHaveBeenCalledTimes(2)
+    expect(warnSpy).toHaveBeenCalledOnce()
+    expect(errorSpy).toHaveBeenCalledOnce()
+    const warnEntry = JSON.parse(warnSpy.mock.calls[0][0])
+    expect(warnEntry.svc).toBe("auth")
+  })
+
   it("root logger has empty context", () => {
     expect(log.context).toEqual({})
   })
@@ -173,6 +237,26 @@ describe("pretty output", () => {
     expect(output).toContain("8080")
     expect(output).toContain("host:")
     expect(output).toContain("localhost")
+  })
+
+  it("shows error message for error-like objects in data", () => {
+    const err = new Error("boom")
+    log.error("failed", { cause: err })
+    const errorSpy = vi.spyOn(console, "error")
+    log.configure({ level: "debug", pretty: true })
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+    log.error("failed", { cause: new Error("boom") })
+    const output = errSpy.mock.calls[0][0]
+    expect(output).toContain("cause:")
+    expect(output).toContain("boom")
+  })
+
+  it("handles no-data log in pretty mode", () => {
+    log.info("bare message")
+    const output = logSpy.mock.calls[0][0]
+    expect(output).toContain("INFO")
+    expect(output).toContain("bare message")
+    expect(output.split("\n")).toHaveLength(1)
   })
 })
 

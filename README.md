@@ -25,9 +25,12 @@ log.error(new Error('connection refused'))
 Pretty output (dev):
 
 ```
-[14:32:01] INFO  server started port=8080
-[14:32:01] WARN  slow query ms=1200
-[14:32:01] ERROR connection refused err=connection refused
+[14:32:01] INFO  server started
+    port: 8080
+[14:32:01] WARN  slow query
+    ms: 1200
+[14:32:01] ERROR connection refused
+    err: connection refused
 ```
 
 JSON output (production):
@@ -43,11 +46,16 @@ Create loggers that carry context through a request, job, or connection.
 ```js
 const conn = log.child({ connId: 'abc-123' })
 conn.info('command received', { cmd: 'submit' })
-// [14:32:01] INFO  command received connId=abc-123 cmd=submit
+// [14:32:01] INFO  command received
+//     connId: abc-123
+//     cmd: submit
 
 const db = conn.child({ db: 'postgres' })
 db.info('query', { ms: 12 })
-// [14:32:01] INFO  query connId=abc-123 db=postgres ms=12
+// [14:32:01] INFO  query
+//     connId: c1
+//     db: postgres
+//     ms: 12
 ```
 
 Context accumulates. Every log from a child includes all parent context.

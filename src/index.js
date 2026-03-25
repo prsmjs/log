@@ -42,7 +42,7 @@ function configure(opts) {
 }
 
 function serializeError(err) {
-  return { message: err.message, stack: err.stack, ...(err.code && { code: err.code }) }
+  return { message: err.message, stack: err.stack, ...(err.code !== undefined && { code: err.code }) }
 }
 
 function serializeValue(v) {
