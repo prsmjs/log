@@ -4,7 +4,7 @@
 
 <h1 align="center">@prsm/log</h1>
 
-Structured logging with child contexts. JSON in production, pretty in dev.
+Structured logging with child contexts that outputs JSON in production and pretty-printed text in development.
 
 ## Installation
 
