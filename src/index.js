@@ -21,21 +21,21 @@ const config = {
 
 /**
  * @typedef {Object} LogOptions
- * @property {LogLevel} [level]
- * @property {boolean} [pretty]
+ * @property {LogLevel} [level] - Minimum severity to emit; lower levels are dropped (default `"info"`). Set to `"none"` to silence all output.
+ * @property {boolean} [pretty] - Output format: `true` for human-readable colorized text, `false` for one-line JSON (default `true` unless `NODE_ENV` is `"production"`).
  */
 
 /**
  * @typedef {Object} Logger
- * @property {Record<string, any>} context
- * @property {(ctx: Record<string, any>) => Logger} child
- * @property {(msg: string | Error, data?: Record<string, any>) => void} debug
- * @property {(msg: string | Error, data?: Record<string, any>) => void} info
- * @property {(msg: string | Error, data?: Record<string, any>) => void} warn
- * @property {(msg: string | Error, data?: Record<string, any>) => void} error
+ * @property {Record<string, any>} context - Accumulated context merged into every log entry this logger emits. Child loggers inherit and extend their parent's context.
+ * @property {(ctx: Record<string, any>) => Logger} child - Creates a child logger that carries the parent's context plus the given fields, useful for threading request, job, or connection identifiers through a call chain.
+ * @property {(msg: string | Error, data?: Record<string, any>) => void} debug - Emits a debug-level entry. Pass an `Error` to log its message and stack; the optional `data` object is merged into the entry.
+ * @property {(msg: string | Error, data?: Record<string, any>) => void} info - Emits an info-level entry. Pass an `Error` to log its message and stack; the optional `data` object is merged into the entry.
+ * @property {(msg: string | Error, data?: Record<string, any>) => void} warn - Emits a warn-level entry. Pass an `Error` to log its message and stack; the optional `data` object is merged into the entry.
+ * @property {(msg: string | Error, data?: Record<string, any>) => void} error - Emits an error-level entry. Pass an `Error` to log its message and stack; the optional `data` object is merged into the entry.
  */
 
-/** @param {LogOptions} opts */
+/** @param {LogOptions} opts - Partial configuration to apply; only the keys present are changed, leaving other settings untouched. */
 function configure(opts) {
   if (opts.level !== undefined) config.level = opts.level
   if (opts.pretty !== undefined) config.pretty = opts.pretty
